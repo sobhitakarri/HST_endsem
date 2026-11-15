@@ -1,0 +1,7 @@
+Approach,Accuracy,Balanced Acc,Recall,Precision,f1-score,_acc,_bal_acc,_rec,_f1
+openai/gpt-oss-120b (simple prompt),100.00%,100.00%,100.00%,100.00%,100.00%,100.0,100.0,100.0,100.0
+openai/gpt-oss-120b (trusthub tj def and ex),100.00%,100.00%,100.00%,100.00%,100.00%,100.0,100.0,100.0,100.0
+openai/gpt-oss-120b (checklist),100.00%,100.00%,100.00%,100.00%,100.00%,100.0,100.0,100.0,100.0
+openai/gpt-oss-120b (Security Analyst Role),100.00%,100.00%,100.00%,100.00%,100.00%,100.0,100.0,100.0,100.0
+openai/gpt-oss-120b (Verification Engineer Role),100.00%,100.00%,100.00%,100.00%,100.00%,100.0,100.0,100.0,100.0
+openai/gpt-oss-120b (Test Engineer Role),100.00%,100.00%,100.00%,100.00%,100.00%,100.0,100.0,100.0,100.0

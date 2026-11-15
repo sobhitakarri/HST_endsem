@@ -22,7 +22,8 @@ def main():
     parser = argparse.ArgumentParser(description="Hardware Trojan Detection Framework (IEEE Access 2025)")
     parser.add_argument("--generate", action="store_true", help="Generate synthetic trojans using local Ollama LLM")
     parser.add_argument("--eval-llm", action="store_true", help="Run LLM prompt engineering detection (Approach 2)")
-    parser.add_argument("--model-name", type=str, default="qwen2.5:3b", help="Ollama model name (default: qwen2.5:3b)")
+    parser.add_argument("--provider", type=str, default="ollama", choices=["ollama", "groq", "openai"], help="LLM API provider (default: ollama)")
+    parser.add_argument("--model-name", type=str, default="qwen2.5:3b", help="Model name (e.g., qwen2.5:3b or openai/gpt-oss-120b)")
     parser.add_argument("--n-splits", type=int, default=5, help="Number of CV folds (default: 5, paper uses 10)")
     parser.add_argument("--llm-samples", type=int, default=20, help="Number of samples to evaluate for LLM (default: 20 balanced, 0 for all)")
     args = parser.parse_args()
@@ -94,8 +95,10 @@ def main():
             eval_df = df
             print(f"[LLM Eval] Evaluating full dataset ({len(eval_df)} samples)")
 
-        evaluator = LLMEvaluator(model_name=args.model_name)
+        evaluator = LLMEvaluator(model_name=args.model_name, provider=args.provider)
         llm_results = evaluator.run_all_strategies(eval_df)
+        llm_results.to_csv("results/llm_results.csv", index=False)
+        print("[Main] Exported LLM results to 'results/llm_results.csv'")
 
     # 6. Recreate Figure 7 (Visualizations)
     print("\n" + "-" * 70)
