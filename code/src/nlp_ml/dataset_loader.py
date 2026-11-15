@@ -85,3 +85,51 @@ def load_zenodo_dataset(
         print(f"[DataLoader] Removed {before - len(df)} duplicate files (same code in multiple folders)")
     print(f"[DataLoader] Zenodo: {len(df)} samples ({sum(df['label'] == 0)} Clean, {sum(df['label'] == 1)} Trojan)")
     return df
+
+
+def load_combined_dataset(
+    zenodo_dir: str = "data/raw/zenodo",
+    clean_dir: str = "data/raw/golden",
+    trojan_dir: str = "data/raw/trojans",
+    apply_sanitization: bool = True
+) -> pd.DataFrame:
+    """
+    Loads and merges all datasets: Zenodo benchmarks (RISC-V, Web3, Wallet),
+    expanded open-source golden designs, and trojan designs.
+    Removes duplicates and attaches design groups for robust evaluation.
+    """
+    frames = []
+
+    # 1. Zenodo benchmark dataset
+    zenodo_path = Path(zenodo_dir)
+    if zenodo_path.exists() and any(zenodo_path.rglob("*.v")):
+        df_z = load_zenodo_dataset(zenodo_dir=zenodo_dir, apply_sanitization=apply_sanitization)
+        frames.append(df_z)
+
+    # 2. Expanded golden & trojan designs
+    clean_path = Path(clean_dir)
+    trojan_path = Path(trojan_dir)
+    if clean_path.exists() or trojan_path.exists():
+        df_local = load_and_preprocess_dataset(clean_dir=clean_dir, trojan_dir=trojan_dir, apply_sanitization=apply_sanitization)
+        frames.append(df_local)
+
+    if not frames:
+        return pd.DataFrame(columns=["filename", "code", "label", "group"])
+
+    combined = pd.concat(frames, ignore_index=True)
+    before = len(combined)
+    combined = combined.drop_duplicates(subset="code").reset_index(drop=True)
+    if before != len(combined):
+        print(f"[DataLoader] Removed {before - len(combined)} duplicate files across merged datasets")
+
+    # Attach base design group (strip _T<n>, _trojan*, etc.)
+    combined["group"] = combined["filename"].str.replace(r"_T\d+.*\.v$", "", regex=True)\
+                                            .str.replace(r"_trojan.*\.v$", "", regex=True)\
+                                            .str.replace(r"_infected.*\.v$", "", regex=True)\
+                                            .str.replace(r"\.v$", "", regex=True)
+
+    n_clean = int((combined["label"] == 0).sum())
+    n_trojan = int((combined["label"] == 1).sum())
+    print(f"[DataLoader] Complete Unified Dataset: {len(combined)} samples ({n_clean} Clean, {n_trojan} Trojan, {combined['group'].nunique()} Unique Hardware Core Groups)")
+    return combined
+

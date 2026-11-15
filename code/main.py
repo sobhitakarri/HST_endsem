@@ -11,7 +11,7 @@ from pathlib import Path
 import pandas as pd
 
 from data.seed_data import seed
-from src.nlp_ml.dataset_loader import load_and_preprocess_dataset, load_zenodo_dataset
+from src.nlp_ml.dataset_loader import load_and_preprocess_dataset, load_zenodo_dataset, load_combined_dataset
 from src.nlp_ml.train_models import evaluate_embeddings_and_models
 from src.llm_eval.evaluator import LLMEvaluator
 from src.synthetic_generator.generator import OllamaTrojanGenerator
@@ -50,13 +50,11 @@ def main():
     print("\n" + "-" * 70)
     print(" PREPROCESSING & SANITIZING DATASET...")
     print("-" * 70)
-    zenodo_dir = Path("data/raw/zenodo")
-    if zenodo_dir.exists() and any(zenodo_dir.rglob("*.v")):
-        df = load_zenodo_dataset(str(zenodo_dir))
-    else:
-        print("[Main] Zenodo dataset not found -> using small demo set.")
-        print("       Run: python data/download_dataset.py")
-        df = load_and_preprocess_dataset(clean_dir=str(golden_dir), trojan_dir=str(trojan_dir))
+    df = load_combined_dataset(
+        zenodo_dir="data/raw/zenodo",
+        clean_dir="data/raw/golden",
+        trojan_dir="data/raw/trojans"
+    )
 
     if len(df) == 0:
         print("[Error] No Verilog files found to train on. Exiting.")
@@ -72,6 +70,11 @@ def main():
     bow_results, _, _ = evaluate_embeddings_and_models(
         df, embedding_type="bow", max_features=1000, n_splits=args.n_splits
     )
+
+    Path("results").mkdir(exist_ok=True)
+    tfidf_results.to_csv("results/tfidf_results.csv", index=False)
+    bow_results.to_csv("results/bow_results.csv", index=False)
+    print("[Main] Exported results to 'results/tfidf_results.csv' and 'results/bow_results.csv'")
 
     # 5. Approach 2: LLM Prompt Engineering Evaluation
     llm_results = None

@@ -97,7 +97,7 @@ def evaluate_embeddings_and_models(
 
     # 2. Stratified Cross-Validation
     cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
-    scoring = ["accuracy", "recall", "precision", "f1"]
+    scoring = ["accuracy", "recall", "precision", "f1", "balanced_accuracy"]
 
     results = []
     models = get_models()
@@ -116,14 +116,17 @@ def evaluate_embeddings_and_models(
             rec = np.mean(scores["test_recall"]) * 100
             prec = np.mean(scores["test_precision"]) * 100
             f1 = np.mean(scores["test_f1"]) * 100
+            bal_acc = np.mean(scores["test_balanced_accuracy"]) * 100
 
             results.append({
                 "Model": name,
                 "Accuracy": f"{acc:.2f}%",
+                "Balanced Acc": f"{bal_acc:.2f}%",
                 "Recall": f"{rec:.2f}%",
                 "Precision": f"{prec:.2f}%",
                 "f1-score": f"{f1:.2f}%",
                 "_acc_raw": acc,
+                "_bal_acc_raw": bal_acc,
                 "_rec_raw": rec,
                 "_f1_raw": f1
             })
@@ -133,7 +136,7 @@ def evaluate_embeddings_and_models(
     results_df = pd.DataFrame(results).sort_values(by="_acc_raw", ascending=False)
     
     # Format and print clean table
-    display_df = results_df[["Model", "Accuracy", "Recall", "f1-score"]]
+    display_df = results_df[["Model", "Accuracy", "Balanced Acc", "Recall", "Precision", "f1-score"]]
     print("\n" + tabulate(display_df, headers="keys", tablefmt="github", showindex=False))
 
     return results_df, vectorizer, models
